@@ -6,10 +6,15 @@
 #include <stdint.h>
 using namespace std;
 class Packer{
-	int son;
-	int brother;
-	unsigned char simbol;
+	class Entry{
+	   public:
+		int son;
+		int brother;
+		unsigned char simbol;
+		Entry();	
+	};
+	Entry * Vocabulary;
    public:
-	void InitialVocabulary(Packer & arr[]);
-	int Pack(const char * ifile,const char * ofile,uint8_t maxS,Packer & arr);
+	void InitialVocabulary(uint8_t maxS);
+	int Pack(const char * ifile,const char * ofile,uint8_t maxS);
 };

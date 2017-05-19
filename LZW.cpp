@@ -1,22 +1,26 @@
-Packer::Packer(){
+#include "LZW.h"
+Packer::Entry::Entry(){
  son=0;
  brother=0;
  simbol=0;
 }
-void Packer::InitialVocabulary(Packer & arr[]){
- for(short i=0;i<256;++i)
+void Packer::InitialVocabulary(uint8_t maxS){
+ uint8_t MS=pow(2,maxS);
+ Vocabulary = new Entry [MS];
+ for(int i=0;i<256;++i)
 	{
-	cout<<i<<endl;
-	arr[i].simbol=i;
+	Vocabulary[i].simbol=i;
 	}
 }
-int Packer::Pack(const char * ifile,const char * ofile,uint8_t maxS,Packer & arr){
+int Packer::Pack(const char * ifile,const char * ofile,uint8_t maxS){
  unsigned char ch;
+ short MS=pow(2,maxS);
  short size=256;
  short temp;
  short tempSB;
  char byte=0;
  int length=0;
+ InitialVocabulary(maxS);
  ifstream fin(ifile);
  if(!fin)return 1;
   fin.unsetf (std::ios::skipws);
@@ -29,27 +33,27 @@ int Packer::Pack(const char * ifile,const char * ofile,uint8_t maxS,Packer & arr
   fin>>ch;
   while(!fin.eof())
 	{
-	if (arr[temp].son)
+	if (Vocabulary[temp].son)
 		{
-		tempSB=arr[temp].son;
-		if(arr[tempSB].simbol==ch)
+		tempSB=Vocabulary[temp].son;
+		if(Vocabulary[tempSB].simbol==ch)
 			{
-			temp=arr[tempSB];
+			temp=Vocabulary[temp].son;
 			continue;
 			}
-		if(arr[temp].simbol!=ch && arr[tempSB].brother!=0)
+		if(Vocabulary[temp].simbol!=ch && Vocabulary[tempSB].brother!=0)
 			{
-			while(arr[tempSB].brother!=0)
+			while(Vocabulary[tempSB].brother!=0)
 				{
-				tempSB=arr[tempSB].brother;
-				if(arr[tempSB].simbol==ch)
+				tempSB=Vocabulary[tempSB].brother;
+				if(Vocabulary[tempSB].simbol==ch)
 					{
 					temp=tempSB;
 					break;
 					}
 				}
 			}
-		if(arr[tempSB].simbol==ch)continue;
+		if(Vocabulary[tempSB].simbol==ch)continue;
 		else
 			{
 			temp=htons(temp);
@@ -66,25 +70,28 @@ int Packer::Pack(const char * ifile,const char * ofile,uint8_t maxS,Packer & arr
 					length=byte=0;
 					}
 				}
-			temp=ntohs(temp);
-			if(arr[temp].son==0)
+			if(size<MS)
 				{
-				arr[temp].son=size;
-				arr[size].simbol=ch;
-				temp=(short)ch;
-				++size;
-				}
-			else
-				{
-				tempSB=arr[temp].brother;
-				while(arr[tempSB].brother!=0)
+				temp=ntohs(temp);
+				if(Vocabulary[temp].son==0)
 					{
-					tempSB=arr[tempSB].brother;
+					Vocabulary[temp].son=size;
+					Vocabulary[size].simbol=ch;
+					temp=(short)ch;
+					++size;
 					}
-				arr[tempSB].brother=size;
-				arr[size].simbol=ch;
-				temp=(short)ch;
-				++size;
+				else
+					{
+					tempSB=Vocabulary[temp].brother;
+					while(Vocabulary[tempSB].brother!=0)
+						{
+						tempSB=Vocabulary[tempSB].brother;
+						}
+					Vocabulary[tempSB].brother=size;
+					Vocabulary[size].simbol=ch;
+					temp=(short)ch;
+					++size;
+					}
 				}
 			}
 		}

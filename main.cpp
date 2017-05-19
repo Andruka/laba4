@@ -7,7 +7,7 @@ int main()
 int type;
 char * ifile;
 char * ofile;
-int maxS;
+uint8_t maxS;
 ifile = new char[30];
 ofile = new char[30];
 cout<<"Выберите действие:"<<endl;
@@ -22,9 +22,9 @@ if(type==1)
 	{
 	cout<<"Введите максимальный размер таблицы:"<<endl;
 	cout<<"2^"<<endl;
-	cin>>atoi(maxS);
-	Packer array[pow(2,maxS)];
-	Packer::Pack(ifile,ofile,maxS,& array[])
+	cin>>maxS;
+	Packer ob;
+	ob.Pack(ifile,ofile,maxS);
 	cout<<"Упаковка завершена"<<endl;
 	}
 if(type==2)
