@@ -8,8 +8,8 @@ using namespace std;
 class Packer{
 	class Entry{
 	   public:
-		int son;
-		int brother;
+		short son;
+		short brother;
 		unsigned char simbol;	
 	};
 	Entry * Vocabulary;
