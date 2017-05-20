@@ -1,6 +1,6 @@
-#include "LZW.h"
+#include "LZW.h" 
 void Packer::InitialVocabulary(uint8_t maxS){
- uint8_t MS=pow(2,maxS);
+ int MS=1<<(maxS-1);
  Vocabulary = new Entry [MS];
  for(int i=0;i<256;++i)
 	{
@@ -17,16 +17,16 @@ void Packer::InitialVocabulary(uint8_t maxS){
 }
 int Packer::Pack(const char * ifile,const char * ofile,uint8_t maxS){
  unsigned char ch;
- short MS=pow(2,maxS);
+ int MS=1<<(maxS-1);
  short size=256;
  short temp;
  short tempSB;
  char byte=0;
- int length=0;
- InitialVocabulary(maxS);
- ifstream fin(ifile);
+ int length=0;cout<<1<<endl;
+ InitialVocabulary(maxS);cout<<2<<endl;
+ ifstream fin(ifile);cout<<3<<endl;
  if(!fin)return 1;
-  fin.unsetf (std::ios::skipws);
+  fin.unsetf (std::ios::skipws);cout<<4<<endl;
   ofstream fout (ofile);
   fout<<"L";
   fout<<"Z";  
@@ -65,7 +65,7 @@ int Packer::Pack(const char * ifile,const char * ofile,uint8_t maxS){
 		temp=htons(temp);
 		for(int i=16-maxS;i<16;++i)
 			{
-			if(temp && (0x80 >> i))
+			if(temp && (0x8000 >> i))
 				{
 				byte|=(0x80 >> length);
 				++length;
@@ -105,7 +105,7 @@ int Packer::Pack(const char * ifile,const char * ofile,uint8_t maxS){
  temp=htons(temp);
  for(int i=16-maxS;i<16;++i)
  	{
- 	if(temp && (0x80 >> i))
+ 	if(temp && (0x8000 >> i))
 		{
  		byte|=(0x80 >> length);
  		++length;
