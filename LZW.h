@@ -10,8 +10,7 @@ class Packer{
 	   public:
 		int son;
 		int brother;
-		unsigned char simbol;
-		Entry();	
+		unsigned char simbol;	
 	};
 	Entry * Vocabulary;
    public:
