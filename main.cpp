@@ -7,7 +7,7 @@ int main()
 int type;
 char * ifile;
 char * ofile;
-int maxS;
+unsigned int maxS;
 ifile = new char[30];
 ofile = new char[30];
 cout<<"Выберите действие:"<<endl;

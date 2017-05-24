@@ -1,5 +1,5 @@
 #include "LZW.h" 
-void Packer::InitialVocabulary(int maxS){
+void Packer::InitialVocabulary(unsigned int maxS){
  unsigned int MS=1<<maxS;
  Vocabulary = new Entry [MS];
  for(int i=0;i<256;++i)
@@ -15,9 +15,10 @@ void Packer::InitialVocabulary(int maxS){
 	Vocabulary[i].simbol=0;
 	}
 }
-int Packer::Pack(const char * ifile,const char * ofile,int maxS){
+int Packer::Pack(const char * ifile,const char * ofile,unsigned int maxS){
  unsigned char ch;
  unsigned int MS=1<<maxS;
+ unsigned short sizeItem=8;
  unsigned int size=256;
  unsigned short temp;
  unsigned short tempSB;
@@ -62,7 +63,7 @@ int Packer::Pack(const char * ifile,const char * ofile,int maxS){
 			if(temp==tempSB)continue;
 			}
 		}
-	for(int i=16-maxS;i<16;++i)
+	for(int i=16-sizeItem;i<16;++i)
 		{
 		if(temp && (0x8000 >> i))
 		{
@@ -80,10 +81,12 @@ int Packer::Pack(const char * ifile,const char * ofile,int maxS){
 		{
 		if(Vocabulary[temp].son==0)
 			{
+			Vocabulary[temp].parent=temp;
 			Vocabulary[temp].son=size;
 			Vocabulary[size].simbol=ch;
 			temp=(short)ch;
 			++size;
+			if(size==(1<<sizeItem))++sizeItem;
 			}
 		else
 			{
@@ -92,17 +95,19 @@ int Packer::Pack(const char * ifile,const char * ofile,int maxS){
 				{
 				tempSB=Vocabulary[tempSB].brother;
 				}
+			Vocabulary[tempSB].parent=temp;
 			Vocabulary[tempSB].brother=size;
 			Vocabulary[size].simbol=ch;
 			temp=(short)ch;
 			++size;
+			if(size==(1<<sizeItem))++sizeItem;
 			}
 		}
 	fin>>ch;
 	}
  if(length!=0)
 	{
- 	for(int i=16-maxS;i<16;++i)
+ 	for(int i=16-sizeItem;i<16;++i)
  		{
  		if(temp && (0x8000 >> i))
 			{
