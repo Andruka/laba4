@@ -2,7 +2,6 @@
 #include <fstream>
 #include <arpa/inet.h>
 #include <cstdlib>
-#include <math.h>
 #include <stdint.h>
 using namespace std;
 class Packer{
@@ -14,6 +13,8 @@ class Packer{
 	};
 	Entry * Vocabulary;
    public:
-	void InitialVocabulary(uint8_t maxS);
-	int Pack(const char * ifile,const char * ofile,uint8_t maxS);
+	void InitialVocabulary(int maxS);
+	int Pack(const char * ifile,const char * ofile,int maxS);
+	int Unpack(const char * ifile,const char * ofile);
 };
+

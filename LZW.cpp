@@ -1,6 +1,6 @@
 #include "LZW.h" 
-void Packer::InitialVocabulary(uint8_t maxS){
- int MS=1<<(maxS-1);
+void Packer::InitialVocabulary(int maxS){
+ unsigned int MS=1<<maxS;
  Vocabulary = new Entry [MS];
  for(int i=0;i<256;++i)
 	{
@@ -15,24 +15,24 @@ void Packer::InitialVocabulary(uint8_t maxS){
 	Vocabulary[i].simbol=0;
 	}
 }
-int Packer::Pack(const char * ifile,const char * ofile,uint8_t maxS){
+int Packer::Pack(const char * ifile,const char * ofile,int maxS){
  unsigned char ch;
- int MS=1<<(maxS-1);
- short size=256;
- short temp;
- short tempSB;
+ unsigned int MS=1<<maxS;
+ unsigned int size=256;
+ unsigned short temp;
+ unsigned short tempSB;
  char byte=0;
- int length=0;cout<<1<<endl;
- InitialVocabulary(maxS);cout<<2<<endl;
- ifstream fin(ifile);cout<<3<<endl;
+ int length=0;
+ InitialVocabulary(maxS);
+ ifstream fin(ifile);
  if(!fin)return 1;
-  fin.unsetf (std::ios::skipws);cout<<4<<endl;
+  fin.unsetf (std::ios::skipws);
   ofstream fout (ofile);
   fout<<"L";
   fout<<"Z";  
   fout<<"W";
   fout<<"5";
-  fout<<maxS;
+  fout<<(uint8_t)maxS;
   fin>>ch;
   temp=(short)ch;
   fin>>ch;
@@ -44,6 +44,7 @@ int Packer::Pack(const char * ifile,const char * ofile,uint8_t maxS){
 		if(Vocabulary[tempSB].simbol==ch)
 			{
 			temp=Vocabulary[temp].son;
+			fin>>ch;
 			continue;
 			}
 		if(Vocabulary[tempSB].simbol!=ch && Vocabulary[tempSB].brother!=0)
@@ -54,70 +55,73 @@ int Packer::Pack(const char * ifile,const char * ofile,uint8_t maxS){
 				if(Vocabulary[tempSB].simbol==ch)
 					{
 					temp=tempSB;
+					fin>>ch;
 					break;
 					}
 				}
-			continue;
+			if(temp==tempSB)continue;
 			}
 		}
-	else
+	for(int i=16-maxS;i<16;++i)
 		{
-		temp=htons(temp);
-		for(int i=16-maxS;i<16;++i)
-			{
-			if(temp && (0x8000 >> i))
-				{
-				byte|=(0x80 >> length);
-				++length;
-				}
-			if(length==8)
-				{
-				fout.write((char*)&byte, sizeof(char));
-				length=0;
-				byte=0;
-				}
+		if(temp && (0x8000 >> i))
+		{
+			byte|=(0x80 >> length);
+			++length;
 			}
-		if(size<MS)
+		if(length==8)
 			{
-			temp=ntohs(temp);
-			if(Vocabulary[temp].son==0)
-				{
-				Vocabulary[temp].son=size;
-				Vocabulary[size].simbol=ch;
-				temp=(short)ch;
-				++size;
-				}
-			else
-				{
-				tempSB=Vocabulary[temp].brother;
-				while(Vocabulary[tempSB].brother!=0)
-					{
-					tempSB=Vocabulary[tempSB].brother;
-					}
-				Vocabulary[tempSB].brother=size;
-				Vocabulary[size].simbol=ch;
-				temp=(short)ch;
-				++size;
-				}
+			fout.write((char*)&byte, sizeof(char));
+			length=0;
+			byte=0;
 			}
 		}
+	if(size<MS)
+		{
+		if(Vocabulary[temp].son==0)
+			{
+			Vocabulary[temp].son=size;
+			Vocabulary[size].simbol=ch;
+			temp=(short)ch;
+			++size;
+			}
+		else
+			{
+			tempSB=Vocabulary[temp].son;
+			while(Vocabulary[tempSB].brother!=0)
+				{
+				tempSB=Vocabulary[tempSB].brother;
+				}
+			Vocabulary[tempSB].brother=size;
+			Vocabulary[size].simbol=ch;
+			temp=(short)ch;
+			++size;
+			}
+		}
+	fin>>ch;
 	}
- temp=htons(temp);
- for(int i=16-maxS;i<16;++i)
- 	{
- 	if(temp && (0x8000 >> i))
-		{
- 		byte|=(0x80 >> length);
- 		++length;
-		}
-       	if(length==8)
-		{
-		fout.write((char*)&byte, sizeof(char));
-		length=0;
-		byte=0;
+ if(length!=0)
+	{
+ 	for(int i=16-maxS;i<16;++i)
+ 		{
+ 		if(temp && (0x8000 >> i))
+			{
+ 			byte|=(0x80 >> length);
+ 			++length;
+			}
+       		if(length==8)
+			{
+			fout.write((char*)&byte, sizeof(char));
+			length=0;
+			byte=0;
+			}
 		}
 	}
  fout.write((char*)&byte, sizeof(char));
  fin.close();
  fout.close();
-}
+ return 0;
+ }
+//int Packer::Unpack(const char * ifile,const char * ofile){
+// 
+// }
