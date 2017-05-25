@@ -29,6 +29,8 @@ if(type==1)
 	}
 if(type==2)
 	{
-	return 1;
+	Packer ob;
+	ob.Unpack(ifile,ofile);	
+	cout<<"Распаковка завершена"<<endl;	
 	}
 }

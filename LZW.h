@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <cstdlib>
 #include <stdint.h>
+#include <vector>
 using namespace std;
 class Packer{
 	class Entry{
@@ -14,7 +15,7 @@ class Packer{
 	};
 	Entry * Vocabulary;
    public:
-	void InitialVocabulary(unsigned int maxS);
+	void InitialVocabulary(unsigned int MS);
 	int Pack(const char * ifile,const char * ofile,unsigned int maxS);
 	int Unpack(const char * ifile,const char * ofile);
 };
