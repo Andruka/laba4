@@ -3,12 +3,14 @@ void Packer::InitialVocabulary(unsigned int MS){
  Vocabulary = new Entry [MS];
  for(int i=0;i<256;++i)
 	{
+	Vocabulary[i].parent=0;
 	Vocabulary[i].simbol=i;
 	Vocabulary[i].son=0;
 	Vocabulary[i].brother=0;	
 	}
  for(int i=256;i<MS;++i)
 	{
+	Vocabulary[i].parent=0;
 	Vocabulary[i].son=0;
 	Vocabulary[i].brother=0;
 	Vocabulary[i].simbol=0;
@@ -70,12 +72,13 @@ int Packer::Pack(const char * ifile,const char * ofile,unsigned int maxS){
 			}
 		++length;
 		if(length==8)
-			{cout<<temp<<endl;
+			{
 			fout.write((char*)&byte, sizeof(char));
 			length=0;
 			byte=0;
 			}
 		}
+	cout<<temp<<endl;
 	if(size<MS)
 		{
 		if(Vocabulary[temp].son==0)
@@ -112,12 +115,13 @@ int Packer::Pack(const char * ifile,const char * ofile,unsigned int maxS){
 			}
 		++length;
        		if(length==8)
-			{cout<<temp<<endl;
+			{
 			fout.write((char*)&byte, sizeof(char));
 			length=0;
 			byte=0;
 			}
 		}
+	cout<<temp<<endl;
  if(length!=0)
  	{
  	fout.write((char*)&byte, sizeof(char));
@@ -129,7 +133,7 @@ int Packer::Pack(const char * ifile,const char * ofile,unsigned int maxS){
  }
 
 int Packer::Unpack(const char * ifile,const char * ofile){
- vector <unsigned char> str;
+ stack <unsigned char> str;
  unsigned char ch;
  unsigned char simbol;
  unsigned int maxS;
@@ -204,30 +208,28 @@ int Packer::Unpack(const char * ifile,const char * ofile){
 			++size;
 			}
 		}
-	str.push_back(Vocabulary[temp1].simbol);
 	while(Vocabulary[temp1].parent!=0)
 		{
+		str.push(Vocabulary[temp1].simbol);
 		temp1=Vocabulary[temp1].parent;
-		str.push_back(Vocabulary[temp1].simbol);
 		}
 	while(str.size()!=0)
 		{
-		fout<<str.back();
-		str.pop_back();
+		fout << str.top();
+		str.pop();
 		}
 	temp1=buf;
 	buf=0;
 	}
- str.push_back(Vocabulary[temp1].simbol);
  while(Vocabulary[temp1].parent!=0)
 	{
+	str.push(Vocabulary[temp1].simbol);
 	temp1=Vocabulary[temp1].parent;
-	str.push_back(Vocabulary[temp1].simbol);
 	}
  while(str.size()!=0)
 	{
-	fout<<str.back();
-	str.pop_back();
+	fout << str.top();
+	str.pop();
 	}
  delete [] Vocabulary;
  fin.close();
