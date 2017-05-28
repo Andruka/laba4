@@ -86,8 +86,7 @@ int Packer::Pack(const char * ifile,const char * ofile,unsigned int maxS){
 			Vocabulary[temp].parent=temp;
 			Vocabulary[temp].son=size;
 			Vocabulary[size].simbol=ch;
-			temp=(short)ch;
-			if(size==(1<<sizeItem))++sizeItem;
+			if(size==(1<<sizeItem) && sizeItem!=maxS)++sizeItem;
 			++size;
 			}
 		else
@@ -100,11 +99,11 @@ int Packer::Pack(const char * ifile,const char * ofile,unsigned int maxS){
 			Vocabulary[tempSB].parent=temp;
 			Vocabulary[tempSB].brother=size;
 			Vocabulary[size].simbol=ch;
-			temp=(short)ch;
-			if(size==(1<<sizeItem))++sizeItem;
+			if(size==(1<<sizeItem) && sizeItem!=maxS)++sizeItem;
 			++size;
 			}
 		}
+	temp=(short)ch;
 	fin>>ch;
 	}
  	for(int i=16-sizeItem;i<16;++i)
@@ -169,6 +168,7 @@ int Packer::Unpack(const char * ifile,const char * ofile){
 	{
 	for(int i=16-sizeItem;i<16;++i)
 		{
+		if(fin.eof())return 0;
 		if((ch & (0x80 >> length))!=0)
 			{
 			buf|=(0x8000 >> i);
@@ -178,7 +178,6 @@ int Packer::Unpack(const char * ifile,const char * ofile){
 			{
 			length=0;
 			fin.read((char*)&ch, sizeof(char));
-			if(fin.eof())return 0;
 			}	
 		}
 	temp2=buf;cout<<buf<<"----"<<size<<"----"<<sizeItem<<endl;
@@ -200,7 +199,7 @@ int Packer::Unpack(const char * ifile,const char * ofile){
 			Vocabulary[size].parent=temp1;
 			Vocabulary[size].simbol=simbol;
 			++size;
-			if(size==(1<<sizeItem)) ++sizeItem;		
+			if(size==(1<<sizeItem) && sizeItem!=maxS) ++sizeItem;		
 			}
 		else
 			{
@@ -208,22 +207,36 @@ int Packer::Unpack(const char * ifile,const char * ofile){
 			Vocabulary[size].parent=temp1;
 			Vocabulary[size].simbol=simbol;
 			++size;
-			if(size==(1<<sizeItem)) ++sizeItem;
+			if(size==(1<<sizeItem) && sizeItem!=maxS) ++sizeItem;
 			}
+		temp1=size-1;
+		while(Vocabulary[temp1].parent!=0)
+			{
+			str.push(Vocabulary[temp1].simbol);
+			temp1=Vocabulary[temp1].parent;
+			}
+		while(str.size()!=0)
+			{
+			fout.write((char*)&str.top(), sizeof(char));
+			str.pop();
+			}
+		temp1=buf;
+		buf=0;
 		}
-	temp1=size-1;
-	while(Vocabulary[temp1].parent!=0)
+	if(size>=MS)
 		{
-		str.push(Vocabulary[temp1].simbol);
-		temp1=Vocabulary[temp1].parent;
+		while(Vocabulary[buf].parent!=0)
+			{
+			str.push(Vocabulary[buf].simbol);
+			buf=Vocabulary[buf].parent;
+			}
+		while(str.size()!=0)
+			{
+			fout.write((char*)&str.top(), sizeof(char));
+			str.pop();
+			}
+		buf=0;
 		}
-	while(str.size()!=0)
-		{
-		fout.write((char*)&str.top(), sizeof(char));
-		str.pop();
-		}
-	temp1=buf;
-	buf=0;
 	}
  delete [] Vocabulary;
  fin.close();
