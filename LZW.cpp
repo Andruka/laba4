@@ -143,6 +143,7 @@ int Packer::Unpack(const char * ifile,const char * ofile){
  unsigned short temp2;
  unsigned short buf=0; 
  int length=0;
+ int a=0;
  ifstream fin(ifile);
  if(!fin)return 1;
  fin.unsetf (std::ios::skipws);
@@ -181,11 +182,12 @@ int Packer::Unpack(const char * ifile,const char * ofile){
 	temp2=buf;cout<<buf<<"----"<<size<<"----"<<sizeItem<<endl;
 	if(size<MS)
 		{
-		while(temp2>255)
+		while(Vocabulary[temp2].parent!=0)
 			{
 			temp2=Vocabulary[temp2].parent;
 			}
-		simbol=Vocabulary[temp2].simbol;
+		if(Vocabulary[temp2].simbol==NULL)temp2=temp3;
+		simbol=Vocabulary[temp2].simbol;if(simbol==NULL)cout<<111<<endl;
 		if(Vocabulary[temp1].son!=0)
 			{
 			temp2=Vocabulary[temp1].son;
