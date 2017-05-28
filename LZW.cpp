@@ -161,14 +161,12 @@ int Packer::Unpack(const char * ifile,const char * ofile){
  InitialVocabulary(MS);
  fin>>ch;
  temp1=(short)ch;
- fout.write((char*)&ch, sizeof(char));
- ++sizeItem;
+ if(maxS > 8)++sizeItem;
  fin.read((char*)&ch, sizeof(char));
  while(!fin.eof())
 	{
 	for(int i=16-sizeItem;i<16;++i)
 		{
-		if(fin.eof())return 0;
 		if((ch & (0x80 >> length))!=0)
 			{
 			buf|=(0x8000 >> i);
@@ -183,7 +181,7 @@ int Packer::Unpack(const char * ifile,const char * ofile){
 	temp2=buf;cout<<buf<<"----"<<size<<"----"<<sizeItem<<endl;
 	if(size<MS)
 		{
-		while(Vocabulary[temp2].parent!=0)
+		while(temp2>255)
 			{
 			temp2=Vocabulary[temp2].parent;
 			}
@@ -210,10 +208,10 @@ int Packer::Unpack(const char * ifile,const char * ofile){
 			if(size==(1<<sizeItem) && sizeItem!=maxS) ++sizeItem;
 			}
 		temp1=size-1;
-		while(Vocabulary[temp1].parent!=0)
+		while(temp1>255)
 			{
-			str.push(Vocabulary[temp1].simbol);
 			temp1=Vocabulary[temp1].parent;
+			str.push(Vocabulary[temp1].simbol);
 			}
 		while(str.size()!=0)
 			{
@@ -221,22 +219,22 @@ int Packer::Unpack(const char * ifile,const char * ofile){
 			str.pop();
 			}
 		temp1=buf;
-		buf=0;
 		}
 	if(size>=MS)
 		{
-		while(Vocabulary[buf].parent!=0)
+		while(buf>255)
 			{
 			str.push(Vocabulary[buf].simbol);
 			buf=Vocabulary[buf].parent;
 			}
+		str.push(Vocabulary[buf].simbol);
 		while(str.size()!=0)
 			{
 			fout.write((char*)&str.top(), sizeof(char));
 			str.pop();
 			}
-		buf=0;
 		}
+	buf=0;
 	}
  delete [] Vocabulary;
  fin.close();
