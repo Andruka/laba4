@@ -3,18 +3,48 @@ void Packer::InitialVocabulary(unsigned int MS){
  Vocabulary = new Entry [MS];
  for(int i=0;i<256;++i)
 	{
-	Vocabulary[i].parent=0;
 	Vocabulary[i].simbol=i;
 	Vocabulary[i].son=0;
 	Vocabulary[i].brother=0;	
 	}
  for(int i=256;i<MS;++i)
 	{
-	Vocabulary[i].parent=0;
 	Vocabulary[i].son=0;
 	Vocabulary[i].brother=0;
 	Vocabulary[i].simbol=0;
 	}
+
+}
+void Unpacker::InitialVocabulary(unsigned int MS){
+ Vocabulary = new Entry [MS];
+ for(int i=0;i<256;++i)
+	{
+	Vocabulary[i].simbol=i;	
+	Vocabulary[i].root=i;
+	Vocabulary[i].parent=0;
+	
+	}
+ for(int i=256;i<MS;++i)
+	{
+	Vocabulary[i].simbol=0;	
+	Vocabulary[i].root=0;
+	Vocabulary[i].parent=0;
+	}
+
+}
+void Unpacker::Write(unsigned short temp , ofstream & fout){
+ stack <unsigned char> str;
+	while(temp>255)
+		{
+		str.push(Vocabulary[temp].simbol);
+		temp=Vocabulary[temp].parent;
+		}
+	str.push(Vocabulary[temp].simbol);
+	while(str.size()!=0)
+		{
+		fout.write((char*)&str.top(), sizeof(char));
+		str.pop();
+		}
 }
 int Packer::Pack(const char * ifile,const char * ofile,unsigned int maxS){
  unsigned char ch;
@@ -83,7 +113,6 @@ int Packer::Pack(const char * ifile,const char * ofile,unsigned int maxS){
 		{
 		if(Vocabulary[temp].son==0)
 			{
-			Vocabulary[temp].parent=temp;
 			Vocabulary[temp].son=size;
 			Vocabulary[size].simbol=ch;
 			if(size==(1<<sizeItem) && sizeItem!=maxS)++sizeItem;
@@ -96,7 +125,6 @@ int Packer::Pack(const char * ifile,const char * ofile,unsigned int maxS){
 				{
 				tempSB=Vocabulary[tempSB].brother;
 				}
-			Vocabulary[tempSB].parent=temp;
 			Vocabulary[tempSB].brother=size;
 			Vocabulary[size].simbol=ch;
 			if(size==(1<<sizeItem) && sizeItem!=maxS)++sizeItem;
@@ -131,16 +159,14 @@ int Packer::Pack(const char * ifile,const char * ofile,unsigned int maxS){
  return 0;
  }
 
-int Packer::Unpack(const char * ifile,const char * ofile){
+int Unpacker::Unpack(const char * ifile,const char * ofile){
  stack <unsigned char> str;
  unsigned char ch;
- unsigned char simbol;
  unsigned int maxS;
  unsigned int MS;
  unsigned short sizeItem=8;
  unsigned int size=256;
- unsigned short temp1;
- unsigned short temp2;
+ unsigned short temp;
  unsigned short buf=0; 
  int length=0;
  int a=0;
@@ -161,7 +187,7 @@ int Packer::Unpack(const char * ifile,const char * ofile){
  MS=1<<maxS;
  InitialVocabulary(MS);
  fin>>ch;
- temp1=(short)ch;
+ temp=(short)ch;
  if(maxS > 8)++sizeItem;
  fin.read((char*)&ch, sizeof(char));
  while(!fin.eof())
@@ -179,63 +205,21 @@ int Packer::Unpack(const char * ifile,const char * ofile){
 			fin.read((char*)&ch, sizeof(char));
 			}	
 		}
-	temp2=buf;cout<<buf<<"----"<<size<<"----"<<sizeItem<<endl;
+	cout<<buf<<"----"<<size<<"----"<<sizeItem<<endl;
 	if(size<MS)
 		{
-		while(Vocabulary[temp2].parent!=0)
-			{
-			temp2=Vocabulary[temp2].parent;
-			}
-		if(Vocabulary[temp2].simbol==NULL)temp2=temp3;
-		simbol=Vocabulary[temp2].simbol;if(simbol==NULL)cout<<111<<endl;
-		if(Vocabulary[temp1].son!=0)
-			{
-			temp2=Vocabulary[temp1].son;
-			while(Vocabulary[temp2].brother!=0)
-				{
-				temp2=Vocabulary[temp2].brother;
-				}
-			Vocabulary[temp2].brother=size;
-			Vocabulary[size].parent=temp1;
-			Vocabulary[size].simbol=simbol;
-			++size;
-			if(size==(1<<sizeItem) && sizeItem!=maxS) ++sizeItem;		
-			}
-		else
-			{
-			Vocabulary[temp1].son=size;
-			Vocabulary[size].parent=temp1;
-			Vocabulary[size].simbol=simbol;
-			++size;
-			if(size==(1<<sizeItem) && sizeItem!=maxS) ++sizeItem;
-			}
-		temp1=size-1;
-		while(temp1>255)
-			{
-			temp1=Vocabulary[temp1].parent;
-			str.push(Vocabulary[temp1].simbol);
-			}
-		while(str.size()!=0)
-			{
-			fout.write((char*)&str.top(), sizeof(char));
-			str.pop();
-			}
-		temp1=buf;
+		Vocabulary[size].parent=temp;
+		Vocabulary[size].simbol=Vocabulary[buf].root;
+		++size;
+		if(size==(1<<sizeItem) && sizeItem!=maxS) ++sizeItem;		
 		}
-	if(size>=MS)
-		{
-		while(buf>255)
+		Write(temp , fout);
+		temp=buf;
+		if(fin.eof())
 			{
-			str.push(Vocabulary[buf].simbol);
-			buf=Vocabulary[buf].parent;
+			Write(buf , fout);
+			return 0;
 			}
-		str.push(Vocabulary[buf].simbol);
-		while(str.size()!=0)
-			{
-			fout.write((char*)&str.top(), sizeof(char));
-			str.pop();
-			}
-		}
 	buf=0;
 	}
  delete [] Vocabulary;

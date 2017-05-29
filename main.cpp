@@ -29,7 +29,7 @@ if(type==1)
 	}
 if(type==2)
 	{
-	Packer ob;
+	Unpacker ob;
 	ob.Unpack(ifile,ofile);	
 	cout<<"Распаковка завершена"<<endl;	
 	}
