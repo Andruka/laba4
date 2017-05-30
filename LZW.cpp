@@ -1,11 +1,11 @@
-#include "LZW.h" 
+#include "LZW.h"
 void Packer::InitialVocabulary(unsigned int MS){
  Vocabulary = new Entry [MS];
  for(int i=0;i<256;++i)
 	{
 	Vocabulary[i].simbol=i;
 	Vocabulary[i].son=0;
-	Vocabulary[i].brother=0;	
+	Vocabulary[i].brother=0;
 	}
  for(int i=256;i<MS;++i)
 	{
@@ -19,14 +19,13 @@ void Unpacker::InitialVocabulary(unsigned int MS){
  Vocabulary = new Entry [MS];
  for(int i=0;i<256;++i)
 	{
-	Vocabulary[i].simbol=i;	
+	Vocabulary[i].simbol=i;
 	Vocabulary[i].root=i;
 	Vocabulary[i].parent=0;
-	
 	}
  for(int i=256;i<MS;++i)
 	{
-	Vocabulary[i].simbol=0;	
+	Vocabulary[i].simbol=0;
 	Vocabulary[i].root=0;
 	Vocabulary[i].parent=0;
 	}
@@ -40,11 +39,13 @@ void Unpacker::Write(unsigned short temp , ofstream & fout){
 		temp=Vocabulary[temp].parent;
 		}
 	str.push(Vocabulary[temp].simbol);
-	while(str.size()!=0)
+	while (str.size() > 0)
 		{
-		fout.write((char*)&str.top(), sizeof(char));
+		char t = str.top();
+		fout.write((char*)&t, sizeof(char));
 		str.pop();
 		}
+
 }
 int Packer::Pack(const char * ifile,const char * ofile,unsigned int maxS){
  unsigned char ch;
@@ -60,10 +61,7 @@ int Packer::Pack(const char * ifile,const char * ofile,unsigned int maxS){
  if(!fin)return 1;
  fin.unsetf (std::ios::skipws);
  ofstream fout (ofile);
- fout<<"L";
- fout<<"Z";  
- fout<<"W";
- fout<<"5";
+ fout<<"LZW5";
  fout<<(uint8_t)maxS;
  fin>>ch;
  temp=(short)ch;
@@ -108,7 +106,6 @@ int Packer::Pack(const char * ifile,const char * ofile,unsigned int maxS){
 			byte=0;
 			}
 		}
-	cout<<temp<<"----"<<size<<"----"<<sizeItem<<endl;
 	if(size<MS)
 		{
 		if(Vocabulary[temp].son==0)
@@ -148,7 +145,6 @@ int Packer::Pack(const char * ifile,const char * ofile,unsigned int maxS){
 			byte=0;
 			}
 		}
-	cout<<temp<<"----"<<size<<"----"<<sizeItem<<endl;
  if(length!=0)
  	{
  	fout.write((char*)&byte, sizeof(char));
@@ -167,9 +163,9 @@ int Unpacker::Unpack(const char * ifile,const char * ofile){
  unsigned short sizeItem=8;
  unsigned int size=256;
  unsigned short temp;
- unsigned short buf=0; 
+ unsigned short buf=0;
  int length=0;
- int a=0;
+ int check=0;
  ifstream fin(ifile);
  if(!fin)return 1;
  fin.unsetf (std::ios::skipws);
@@ -191,9 +187,10 @@ int Unpacker::Unpack(const char * ifile,const char * ofile){
  if(maxS > 8)++sizeItem;
  fin.read((char*)&ch, sizeof(char));
  while(!fin.eof())
-	{
+    {
 	for(int i=16-sizeItem;i<16;++i)
 		{
+		
 		if((ch & (0x80 >> length))!=0)
 			{
 			buf|=(0x8000 >> i);
@@ -203,24 +200,29 @@ int Unpacker::Unpack(const char * ifile,const char * ofile){
 			{
 			length=0;
 			fin.read((char*)&ch, sizeof(char));
-			}	
+			++check;
+			}
 		}
-	cout<<buf<<"----"<<size<<"----"<<sizeItem<<endl;
 	if(size<MS)
 		{
 		Vocabulary[size].parent=temp;
-		Vocabulary[size].simbol=Vocabulary[buf].root;
+		if (buf != size) {
+			Vocabulary[size].root = Vocabulary[temp].root;
+			Vocabulary[size].simbol = Vocabulary[buf].root;
+		}
+		else
+		Vocabulary[size].root = Vocabulary[size].simbol = Vocabulary[temp].root;
 		++size;
-		if(size==(1<<sizeItem) && sizeItem!=maxS) ++sizeItem;		
+		if(size==(1<<sizeItem) && sizeItem!=maxS) ++sizeItem;
 		}
 		Write(temp , fout);
-		temp=buf;
 		if(fin.eof())
 			{
-			Write(buf , fout);
+			if(check==2)Write(buf , fout);
 			return 0;
 			}
-	buf=0;
+	temp=buf;
+	check=buf=0;
 	}
  delete [] Vocabulary;
  fin.close();
