@@ -2,8 +2,7 @@
 
 using namespace std;
 
-int main()
-{
+int main(){
 int type;
 char * ifile;
 char * ofile;
@@ -18,19 +17,27 @@ cout<<"Введите имя файла на вход"<<endl;
 cin>>ifile;
 cout<<"Введите имя файла на выход"<<endl;
 cin>>ofile;
-if(type==1)
-	{
-	cout<<"Введите максимальный размер таблицы:"<<endl;
-	cout<<"2^"<<endl;
-	cin>>maxS;
-	Packer ob;
-	ob.Pack(ifile,ofile,maxS);
-	cout<<"Упаковка завершена"<<endl;
+if(type==1){
+    cout<<"Введите максимальный размер таблицы:"<<endl;
+    cout<<"2^"<<endl;
+    cin>>maxS;
+    if(maxS<8 || maxS>16){
+        cout<<"Ошибка!Некорректный размер словаря!"<<endl;
+	return 1;
 	}
-if(type==2)
-	{
-	Unpacker ob;
-	ob.Unpack(ifile,ofile);	
-	cout<<"Распаковка завершена"<<endl;	
+    Packer ob;
+    if(ob.Pack(ifile,ofile,maxS)){
+	cout<<"Ошибка!"<<endl;
+	return 1;
 	}
+    cout<<"Упаковка завершена"<<endl;
+    }
+if(type==2){
+    Unpacker ob;
+    if(ob.Unpack(ifile,ofile)){
+	cout<<"Ошибка!"<<endl;
+	return 1;	
+	}
+    cout<<"Распаковка завершена"<<endl;	
+    }
 }
