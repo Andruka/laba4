@@ -12,6 +12,7 @@ for(int i=256;i<MS;++i){
     Vocabulary[i].simbol=0;
     }
 }
+
 void Unpacker::InitialVocabulary(unsigned int MS){
 Vocabulary = new Entry [MS];
 for(int i=0;i<256;++i){
@@ -25,6 +26,7 @@ for(int i=256;i<MS;++i){
     Vocabulary[i].parent=0;
     }
 }
+
 void Unpacker::Write(unsigned short temp , ofstream & fout){
 stack <unsigned char> str;
     while(temp>255){
@@ -138,7 +140,6 @@ unsigned int size=256;
 unsigned short temp;
 unsigned short buf=0;
 int length=0;
-bool check=false;
 ifstream fin(ifile);
 if(!fin)return 1;
 fin.unsetf (std::ios::skipws);
@@ -158,19 +159,23 @@ if(MS)
 InitialVocabulary(MS);
 fin>>ch;
 temp=ch;
-if(MS<8 || MS>16)++sizeItem;
+if(maxS<8 || maxS>16)return 1;
+if(maxS>8)++sizeItem;
 fin>>ch;
 while(!fin.eof()){
    for(int i=16-sizeItem;i<16;++i){
+       	if(length==8){
+	    length=0;
+	    fin>>ch;
+	    if(fin.eof()){
+		Write(temp , fout);
+		return 0;
+	    }
+	}
 	if((ch & (0x80 >> length))!=0){
 	    buf|=(0x8000 >> i);
 	    }
 	++length;
-       	if(length==8){
-	    length=0;
-	    fin>>ch;
-	    if(fin.eof() && i==15)check=true;
-	    }
     }
     if(size<MS){
 	Vocabulary[size].parent=temp;
@@ -184,13 +189,8 @@ while(!fin.eof()){
 	if(size==(1<<sizeItem) && sizeItem!=maxS) ++sizeItem;
     }
     Write(temp , fout);
-    if(fin.eof()){
-	if(check)Write(buf , fout);
-	delete [] Vocabulary;
-	return 0;
-    }
     temp=buf;
-    check=buf=0;
+    buf=0;
 }
 delete [] Vocabulary;
 fin.close();
